@@ -43,9 +43,11 @@
 #include <iosfwd>
 #include <limits>
 #include <string_view>
-#include <optional>
 #include <type_traits>
 #include <utility>
+#if !defined(MAGIC_ENUM_USING_ALIAS_OPTIONAL)
+#include <optional>
+#endif
 
 #if defined(__clang__)
 #  pragma clang diagnostic push
@@ -204,6 +206,13 @@ static_assert(MAGIC_ENUM_RANGE_MAX > 0, "MAGIC_ENUM_RANGE_MAX must be greater th
 static_assert(MAGIC_ENUM_RANGE_MAX < (std::numeric_limits<std::int16_t>::max)(), "MAGIC_ENUM_RANGE_MAX must be less than INT16_MAX.");
 
 static_assert(MAGIC_ENUM_RANGE_MAX > MAGIC_ENUM_RANGE_MIN, "MAGIC_ENUM_RANGE_MAX must be greater than MAGIC_ENUM_RANGE_MIN.");
+
+// If need another optional type, define the macro MAGIC_ENUM_USING_ALIAS_OPTIONAL.
+#if defined(MAGIC_ENUM_USING_ALIAS_OPTIONAL)
+MAGIC_ENUM_USING_ALIAS_OPTIONAL
+#else
+using std::optional;
+#endif
 
 namespace detail {
 
@@ -694,9 +703,9 @@ template <typename E>
 }
 
 // Obtains enum value from integer value.
-// Returns std::optional with enum value.
+// Returns optional with enum value.
 template <typename E>
-[[nodiscard]] constexpr auto enum_cast(underlying_type_t<E> value) noexcept -> detail::enable_if_enum_t<E, std::optional<std::decay_t<E>>> {
+[[nodiscard]] constexpr auto enum_cast(underlying_type_t<E> value) noexcept -> detail::enable_if_enum_t<E, optional<std::decay_t<E>>> {
   using D = std::decay_t<E>;
 
   if (detail::undex<D>(value) != detail::invalid_index_v<D>) {
@@ -707,9 +716,9 @@ template <typename E>
 }
 
 // Obtains enum value from string name.
-// Returns std::optional with enum value.
+// Returns optional with enum value.
 template <typename E, typename BinaryPredicate>
-[[nodiscard]] constexpr auto enum_cast(std::string_view value, BinaryPredicate p) noexcept(std::is_nothrow_invocable_r_v<bool, BinaryPredicate, char, char>) -> detail::enable_if_enum_t<E, std::optional<std::decay_t<E>>> {
+[[nodiscard]] constexpr auto enum_cast(std::string_view value, BinaryPredicate p) noexcept(std::is_nothrow_invocable_r_v<bool, BinaryPredicate, char, char>) -> detail::enable_if_enum_t<E, optional<std::decay_t<E>>> {
   static_assert(std::is_invocable_r_v<bool, BinaryPredicate, char, char>, "magic_enum::enum_cast requires bool(char, char) invocable predicate.");
   using D = std::decay_t<E>;
 
@@ -723,9 +732,9 @@ template <typename E, typename BinaryPredicate>
 }
 
 // Obtains enum value from string name.
-// Returns std::optional with enum value.
+// Returns optional with enum value.
 template <typename E>
-[[nodiscard]] constexpr auto enum_cast(std::string_view value) noexcept -> detail::enable_if_enum_t<E, std::optional<std::decay_t<E>>> {
+[[nodiscard]] constexpr auto enum_cast(std::string_view value) noexcept -> detail::enable_if_enum_t<E, optional<std::decay_t<E>>> {
   using D = std::decay_t<E>;
 
   return enum_cast<D>(value, detail::char_equal_to{});
@@ -738,9 +747,9 @@ template <typename E>
 }
 
 // Obtains index in enum values from enum value.
-// Returns std::optional with index.
+// Returns optional with index.
 template <typename E>
-[[nodiscard]] constexpr auto enum_index(E value) noexcept -> detail::enable_if_enum_t<E, std::optional<std::size_t>> {
+[[nodiscard]] constexpr auto enum_index(E value) noexcept -> detail::enable_if_enum_t<E, optional<std::size_t>> {
   using D = std::decay_t<E>;
 
   if (const auto i = detail::endex<D>(value); i != detail::invalid_index_v<D>) {
@@ -803,7 +812,7 @@ std::basic_ostream<Char, Traits>& operator<<(std::basic_ostream<Char, Traits>& o
 }
 
 template <typename Char, typename Traits, typename E, std::enable_if_t<std::is_enum_v<E>, int> = 0>
-std::basic_ostream<Char, Traits>& operator<<(std::basic_ostream<Char, Traits>& os, std::optional<E> value) {
+std::basic_ostream<Char, Traits>& operator<<(std::basic_ostream<Char, Traits>& os, optional<E> value) {
   if (value.has_value()) {
     os << value.value();
   }
@@ -932,9 +941,9 @@ template <typename E>
 }
 
 // Obtains enum-flags value from integer value.
-// Returns std::optional with enum-flags value.
+// Returns optional with enum-flags value.
 template <typename E, bool Strict = false>
-[[nodiscard]] constexpr auto enum_cast(underlying_type_t<E> value) noexcept -> detail::enable_if_enum_flags_t<E, std::optional<std::decay_t<E>>> {
+[[nodiscard]] constexpr auto enum_cast(underlying_type_t<E> value) noexcept -> detail::enable_if_enum_flags_t<E, optional<std::decay_t<E>>> {
   using D = std::decay_t<E>;
   using U = underlying_type_t<D>;
 
@@ -970,9 +979,9 @@ template <typename E, bool Strict = false>
 }
 
 // Obtains enum-flags value from string name.
-// Returns std::optional with enum-flags value.
+// Returns optional with enum-flags value.
 template <typename E, bool Strict = false, typename BinaryPredicate>
-[[nodiscard]] constexpr auto enum_cast(std::string_view value, BinaryPredicate p) noexcept(std::is_nothrow_invocable_r_v<bool, BinaryPredicate, char, char>) -> detail::enable_if_enum_flags_t<E, std::optional<std::decay_t<E>>> {
+[[nodiscard]] constexpr auto enum_cast(std::string_view value, BinaryPredicate p) noexcept(std::is_nothrow_invocable_r_v<bool, BinaryPredicate, char, char>) -> detail::enable_if_enum_flags_t<E, optional<std::decay_t<E>>> {
   static_assert(std::is_invocable_r_v<bool, BinaryPredicate, char, char>, "magic_enum::flags::enum_cast requires bool(char, char) invocable predicate.");
   using D = std::decay_t<E>;
 
@@ -1014,9 +1023,9 @@ template <typename E, bool Strict = false, typename BinaryPredicate>
 }
 
 // Obtains enum-flags value from string name.
-// Returns std::optional with enum-flags value.
+// Returns optional with enum-flags value.
 template <typename E, bool Strict = false>
-[[nodiscard]] constexpr auto enum_cast(std::string_view value) noexcept -> detail::enable_if_enum_flags_t<E, std::optional<std::decay_t<E>>> {
+[[nodiscard]] constexpr auto enum_cast(std::string_view value) noexcept -> detail::enable_if_enum_flags_t<E, optional<std::decay_t<E>>> {
   using D = std::decay_t<E>;
 
   return enum_cast<D, Strict>(value, detail::char_equal_to{});
@@ -1026,9 +1035,9 @@ template <typename E, bool Strict = false>
 using magic_enum::enum_integer;
 
 // Obtains index in enum-flags values from enum-flags value.
-// Returns std::optional with index.
+// Returns optional with index.
 template <typename E>
-[[nodiscard]] constexpr auto enum_index(E value) noexcept -> detail::enable_if_enum_flags_t<E, std::optional<std::size_t>> {
+[[nodiscard]] constexpr auto enum_index(E value) noexcept -> detail::enable_if_enum_flags_t<E, optional<std::size_t>> {
   using D = std::decay_t<E>;
 
   if (detail::is_pow2<D>(value)) {
@@ -1098,7 +1107,7 @@ std::basic_ostream<Char, Traits>& operator<<(std::basic_ostream<Char, Traits>& o
 }
 
 template <typename Char, typename Traits, typename E, detail::enable_if_enum_flags_t<E, int> = 0>
-std::basic_ostream<Char, Traits>& operator<<(std::basic_ostream<Char, Traits>& os, std::optional<E> value) {
+std::basic_ostream<Char, Traits>& operator<<(std::basic_ostream<Char, Traits>& os, optional<E> value) {
   if (value.has_value()) {
     os << value.value();
   }
